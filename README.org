@@ -1,0 +1,34 @@
+* Welcome!
+  =snaplet-amqp= provides a convenience interface to the Haskell AMQP
+  package.
+
+  #+BEGIN_SRC
+  import           Control.Lens
+  import           Snap
+  import           Snap.Snaplet
+  import           Snap.Snaplet.Mandrill
+  import           Network.API.Mandrill  hiding (runMandrill)
+
+  data App = App
+      { _mandrill :: Snaplet Mandrill }
+
+  makeLenses ''App
+
+  instance HasMandrill (Handler b App) where
+      getMandrill = with mandrill getMandrill
+
+  app :: SnapletInit App App
+  app = makeSnaplet "app" "An snaplet example application." Nothing $ do
+      a <- nestSnaplet "mandrill" mandrill initMandrill
+      addRoutes appRoutes -- Your routes, I haven't defined any here
+      return $ App a
+
+  handler = do
+      runMandrill $ do
+          let msg = "<p>My Html</p>"
+          res <- sendEmail (newTextMessage addr [addr] "Hello" msg)
+          case res of
+            MandrillSuccess k -> liftIO (print k)
+            MandrillFailure f -> liftIO (print f)
+
+  #+END_SRC
