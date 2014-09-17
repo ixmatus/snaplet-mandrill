@@ -42,7 +42,7 @@ initMandrill = makeSnaplet "mandrill" description datadir $ do
 
 -------------------------------------------------------------------------------
 -- | Runs an Mandrill action in any monad with a HasAmqpConn instance.
-runMandrill :: (HasMandrill m) => M.MandrillT m a -> m (m a)
+runMandrill :: (HasMandrill m) => M.MandrillT m a -> m a
 runMandrill action = do
     tk <- getMandrill
-    return $ M.runMandrill tk action
+    return =<< M.runMandrill tk action
