@@ -1,5 +1,5 @@
 Name:                snaplet-mandrill
-Version:             0.0.0.1
+Version:             0.1.0.1
 Synopsis:            Snap framework snaplet for the Mandrill API library.
 Homepage:            https://github.com/ixmatus/snaplet-mandrill
 License:             BSD3

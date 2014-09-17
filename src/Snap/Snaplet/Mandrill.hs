@@ -13,21 +13,21 @@ import           Control.Applicative
 import           Control.Monad.State
 import           Control.Monad.Trans.Reader
 import           Data.Configurator
-import           Network.API.Mandrill       (MandrillKey)
+import qualified Network.API.Mandrill       as M
 import           Paths_snaplet_mandrill
 import           Snap.Snaplet
 
 -------------------------------------------------------------------------------
-newtype MandrillState = MandrillState { token :: MandrillKey }
+newtype MandrillState = MandrillState { token :: M.MandrillKey }
 
 -------------------------------------------------------------------------------
 class MonadIO m => HasMandrill m where
-    getMandrill :: m MandrillKey
+    getMandrill :: m M.MandrillKey
 
 instance HasMandrill (Handler b MandrillState) where
     getMandrill = gets token
 
-instance MonadIO m => HasMandrill (ReaderT MandrillKey m) where
+instance MonadIO m => HasMandrill (ReaderT M.MandrillKey m) where
     getMandrill = ask
 
 -- | Initialize the Mandrill Snaplet.
@@ -42,5 +42,7 @@ initMandrill = makeSnaplet "mandrill" description datadir $ do
 
 -------------------------------------------------------------------------------
 -- | Runs an Mandrill action in any monad with a HasAmqpConn instance.
-runMandrill :: (HasMandrill m) => (MandrillKey -> b) -> m b
-runMandrill action = getMandrill >>= return . action
+runMandrill :: (HasMandrill m) => M.MandrillT m a -> m (m a)
+runMandrill action = do
+    tk <- getMandrill
+    return $ M.runMandrill tk action
