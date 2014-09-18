@@ -3,32 +3,73 @@
   package.
 
   #+BEGIN_SRC
-  import           Control.Lens
-  import           Snap
-  import           Snap.Snaplet
-  import           Snap.Snaplet.Mandrill
-  import           Network.API.Mandrill  hiding (runMandrill)
+  {-# LANGUAGE FlexibleInstances #-}
+  {-# LANGUAGE OverloadedStrings #-}
+  {-# LANGUAGE RecordWildCards   #-}
+  {-# LANGUAGE TemplateHaskell   #-}
 
+  module Main where
+
+  ------------------------------------------------------------------------------
+  import           Control.Applicative
+  import           Control.Lens
+  import           Data.ByteString.Char8 as C8
+  import           Data.Maybe            (fromMaybe)
+  import           Network.API.Mandrill  hiding (runMandrill)
+  import           Snap
+  import           Snap.Snaplet.Mandrill
+  import           Text.Email.Validate
+
+  ------------------------------------------------------------------------------
   data App = App
-      { _mandrill :: Snaplet Mandrill }
+      { _mandrill :: Snaplet MandrillState
+      }
 
   makeLenses ''App
 
   instance HasMandrill (Handler b App) where
       getMandrill = with mandrill getMandrill
 
+  ------------------------------------------------------------------------------
+  -- | The application's routes.
+  routes :: [(ByteString, Handler App App ())]
+  routes = [ ("/"            , writeText "hello")
+           , ("mailme/:email", fooHandler)
+           ]
+
+  decodedParam :: MonadSnap m => ByteString -> m ByteString
+  decodedParam p = fromMaybe "" <$> getParam p
+
+  fooHandler :: Handler App App ()
+  fooHandler = do
+      email <- decodedParam "email"
+      case emailAddress email of
+          Nothing -> do
+              modifyResponse $ setResponseCode 400
+          Just e  -> do
+              res <- runMandrill $ do
+                  return =<< sendEmail (newTextMessage e [e] "Hello" "<p>My Html</p>")
+
+              mandrillResponse res
+
+      getResponse >>= finishWith
+
+    where
+      mandrillResponse (MandrillSuccess _) = modifyResponse $ setResponseCode 204
+      mandrillResponse (MandrillFailure e) = do
+                      modifyResponse $ setResponseCode 500
+                      writeBS . C8.pack $ show e
+
+
+  ------------------------------------------------------------------------------
+  -- | The application initializer.
   app :: SnapletInit App App
   app = makeSnaplet "app" "An snaplet example application." Nothing $ do
-      a <- nestSnaplet "mandrill" mandrill initMandrill
-      addRoutes appRoutes -- Your routes, I haven't defined any here
-      return $ App a
+      m <- nestSnaplet "mandrill" mandrill $ initMandrill
+      addRoutes routes
+      return $ App m
 
-  handler = do
-      runMandrill $ do
-          let msg = "<p>My Html</p>"
-          res <- sendEmail (newTextMessage addr [addr] "Hello" msg)
-          case res of
-            MandrillSuccess k -> liftIO (print k)
-            MandrillFailure f -> liftIO (print f)
 
+  main :: IO ()
+  main = serveSnaplet defaultConfig app
   #+END_SRC
