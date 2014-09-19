@@ -1,6 +1,8 @@
 * Welcome!
-  =snaplet-amqp= provides a convenience interface to the Haskell AMQP
-  package.
+  [[https://drone.io/github.com/ixmatus/snaplet-mandrill/latest][https://drone.io/github.com/ixmatus/snaplet-mandrill/status.png]]
+  
+  =snaplet-mandrill= provides a convenience interface to the Haskell
+  Mandrill package.
 
   #+BEGIN_SRC
   {-# LANGUAGE FlexibleInstances #-}
