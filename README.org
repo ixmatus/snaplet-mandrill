@@ -1,4 +1,4 @@
-* Welcome!
+* Welcome! [[https://budueba.com/hackage/snaplet-mandrill][https://hackage.haskell.org/package/snaplet-mandrill]]
   [[https://drone.io/github.com/ixmatus/snaplet-mandrill/latest][https://drone.io/github.com/ixmatus/snaplet-mandrill/status.png]]
   
   =snaplet-mandrill= provides a convenience interface to the Haskell
